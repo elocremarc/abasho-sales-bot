@@ -1,22 +1,22 @@
-import { postTweet } from '../twitter-bot/twitter';
-import { Penguin } from '../models/penguin';
-import { request } from '../utilities/request';
-import Web3 from 'web3';
-import * as dotenv from 'dotenv';
-import { getCoinGeckoId } from '../utilities/functions';
+import { postTweet } from "../twitter-bot/twitter";
+import { Penguin } from "../models/penguin";
+import { request } from "../utilities/request";
+import Web3 from "web3";
+import * as dotenv from "dotenv";
+import { getCoinGeckoId } from "../utilities/functions";
 dotenv.config();
 
-const ETHERSCAN_ABI_URL = process.env.ETHERSCAN_ENDPOINT || '';
-const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || '';
-const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS || '';
-const OPENSEA_ADDRESS = process.env.OPENSEA_ADDRESS || '';
-const SEAPORT_ADDRESS = process.env.SEAPORT_ADDRESS || '';
-const LOOKS_RARE_ADDRESS = process.env.LOOKS_RARE_ADDRESS || '';
-const WSS_PROVIDER = process.env.WSS_PROVIDER || '';
+const ETHERSCAN_ABI_URL = process.env.ETHERSCAN_ENDPOINT || "";
+const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || "";
+const CONTRACT_ADDRESS = process.env.CONTRACT_ADDRESS || "";
+const OPENSEA_ADDRESS = process.env.OPENSEA_ADDRESS || "";
+const SEAPORT_ADDRESS = process.env.SEAPORT_ADDRESS || "";
+const LOOKS_RARE_ADDRESS = process.env.LOOKS_RARE_ADDRESS || "";
+const WSS_PROVIDER = process.env.WSS_PROVIDER || "";
 const PENGUIN_BASE_URL =
-  'https://opensea.io/assets/0xbd3531da5cf5857e7cfaa92426877b022e612cf8/';
+  "https://opensea.io/assets/0xE9C79B33C3A06f5Ae7369599F5a1e2FF886e17F0/";
 const TRANSFER_EVENT_HASH =
-  '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
+  "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
 
 const options = {
   // Enable auto reconnection
@@ -30,7 +30,6 @@ const options = {
 const web3 = new Web3(
   new Web3.providers.WebsocketProvider(WSS_PROVIDER, options)
 );
-
 async function getContractAbi() {
   const abi = await request(
     `${ETHERSCAN_ABI_URL}${CONTRACT_ADDRESS}&apiKey=${ETHERSCAN_API_KEY}`
@@ -48,9 +47,9 @@ async function getTokenInfo(address: string) {
 const _getNFTReceiver = (logs: any) => {
   for (let log of logs) {
     // ERC-20 Transfer returns the value in `data`, while ERC-721 has the same signature but returns empty data
-    if (log.topics[0] === TRANSFER_EVENT_HASH && log.data === '0x') {
+    if (log.topics[0] === TRANSFER_EVENT_HASH && log.data === "0x") {
       // 2nd parameter of the `Transfer()` event contains the NFT receiver
-      return web3.eth.abi.decodeParameter('address', log.topics[2]);
+      return web3.eth.abi.decodeParameter("address", log.topics[2]);
     }
   }
   return null;
@@ -89,25 +88,25 @@ async function getUsdValue(price: number, tokenSymbol: string) {
 }
 
 async function nonEthSale(event: any, receipt: any, nftReceiver: any) {
-  let tokenSymbol: string = '';
+  let tokenSymbol: string = "";
   let price: number = 0;
 
   for (let log of receipt.logs) {
     const to = web3.eth.abi
-      .decodeParameter('address', log.topics[1])
+      .decodeParameter("address", log.topics[1])
       .toLowerCase();
     if (
       log.topics[0] === TRANSFER_EVENT_HASH &&
       to === event.returnValues.to.toLowerCase() &&
-      log.data !== '0x'
+      log.data !== "0x"
     ) {
       const tokenInfo = await getTokenInfo(log.address);
       tokenSymbol = tokenInfo.result[0].tokenSymbol;
       price +=
-        +web3.eth.abi.decodeParameter('uint256', log.data) /
+        +web3.eth.abi.decodeParameter("uint256", log.data) /
         Math.pow(10, tokenInfo.result[0].tokenDecimal);
     } else {
-      console.log('Non sale transfer');
+      console.log("Non sale transfer");
     }
   }
 
@@ -120,11 +119,11 @@ export async function subscribeToSales() {
   const contract = new web3.eth.Contract(abi, CONTRACT_ADDRESS);
   contract.events
     .Transfer({})
-    .on('connected', (subscriptionId: any) => {
-      console.log('Subscribing to Pudgy Penguins contract');
+    .on("connected", (subscriptionId: any) => {
+      console.log("Subscribing to Pudgy Penguins contract");
     })
-    .on('data', async (event: any) => {
-      console.log('Transfer event');
+    .on("data", async (event: any) => {
+      console.log("Transfer event");
       const receipt = await web3.eth.getTransactionReceipt(
         event.transactionHash
       );
@@ -138,7 +137,7 @@ export async function subscribeToSales() {
           response.to === LOOKS_RARE_ADDRESS
         ) {
           if (+response.value != 0) {
-            tokenSymbol = 'ETH';
+            tokenSymbol = "ETH";
             price = +web3.utils.fromWei(response.value);
             const usdValue = await getUsdValue(price, tokenSymbol);
             tweetSale(event, price, tokenSymbol, `$${usdValue.toFixed(2)}`);
@@ -146,17 +145,17 @@ export async function subscribeToSales() {
             nonEthSale(event, receipt, nftReceiver);
           }
         } else {
-          console.log('Non OpenSea or LooksRare Transfer');
+          console.log("Non OpenSea or LooksRare Transfer");
         }
       });
     })
-    .on('changed', (event: any) => {
+    .on("changed", (event: any) => {
       // remove event from local database
-      console.log('changed event');
+      console.log("changed event");
     })
-    .on('error', (error: any, receipt: any) => {
+    .on("error", (error: any, receipt: any) => {
       // If the transaction was rejected by the network with a receipt, the second parameter will be the receipt.
-      console.log('error');
+      console.log("error");
       console.log(error);
     });
 }
