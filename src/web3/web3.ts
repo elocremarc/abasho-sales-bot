@@ -15,6 +15,7 @@ const LOOKS_RARE_ADDRESS = process.env.LOOKS_RARE_ADDRESS || '';
 const BLUR_ADDRESS = process.env.BLUR_ADDRESS || '';
 const BLUR_SWEEP_ADDRESS = process.env.BLUR_SWEEP_ADDRESS || '';
 const X2Y2_ADDRESS = process.env.X2Y2_ADDRESS || '';
+const UNISWAP_ADDRESS = process.env.UNISWAP_ADDRESS || '';
 const WSS_PROVIDER = process.env.WSS_PROVIDER || '';
 const PENGUIN_BASE_URL =
   'https://opensea.io/assets/0xbd3531da5cf5857e7cfaa92426877b022e612cf8/';
@@ -166,7 +167,8 @@ export async function subscribeToSales() {
               response.to === LOOKS_RARE_ADDRESS ||
               response.to === BLUR_ADDRESS ||
               response.to === BLUR_SWEEP_ADDRESS ||
-              response.to === X2Y2_ADDRESS
+              response.to === X2Y2_ADDRESS ||
+              response.to === UNISWAP_ADDRESS
             ) {
               if (+response.value != 0) {
                 tokenSymbol = 'ETH';
