@@ -51,17 +51,6 @@ async function getTokenInfo(address: string) {
   return JSON.parse(tokenInfo);
 }
 
-const _getNFTReceiver = (logs: any) => {
-  for (let log of logs) {
-    // ERC-20 Transfer returns the value in `data`, while ERC-721 has the same signature but returns empty data
-    if (log.topics[0] === TRANSFER_EVENT_HASH && log.data === '0x') {
-      // 2nd parameter of the `Transfer()` event contains the NFT receiver
-      return web3.eth.abi.decodeParameter('address', log.topics[2]);
-    }
-  }
-  return null;
-};
-
 function tweetSale(
   event: any,
   price: number,
@@ -94,7 +83,11 @@ async function getUsdValue(price: number, tokenSymbol: string) {
   return usdPrice * +price;
 }
 
-async function nonEthSale(event: any, receipt: any, nftReceiver: any) {
+const getTxValue = (value: string) => {
+  return +web3.utils.fromWei(value);
+};
+
+const getLogInfo = async (event: any, receipt: any) => {
   let tokenSymbol: string = '';
   let price: number = 0;
 
@@ -112,14 +105,11 @@ async function nonEthSale(event: any, receipt: any, nftReceiver: any) {
       price +=
         +web3.eth.abi.decodeParameter('uint256', log.data) /
         Math.pow(10, tokenInfo.result[0].tokenDecimal);
-    } else {
-      console.log('Non sale transfer');
     }
   }
 
-  const usdValue = await getUsdValue(price, tokenSymbol);
-  tweetSale(event, price, tokenSymbol, `$${usdValue.toFixed(2)}`);
-}
+  return { tokenSymbol, price };
+};
 
 function getTokenCount(receipt: any): number {
   return receipt.logs.reduce((count: number, log: any) => {
@@ -128,9 +118,8 @@ function getTokenCount(receipt: any): number {
         .decodeParameter('address', log.topics[2])
         .toLowerCase();
       return log.topics[0] === TRANSFER_EVENT_HASH &&
-        log.address === CONTRACT_ADDRESS &&
-        from === receipt.from.toLowerCase() &&
-        log.data === '0x'
+        log.topics[3] !== null &&
+        from === receipt.from.toLowerCase()
         ? (count += 1)
         : count;
     } catch {
@@ -154,13 +143,14 @@ export async function subscribeToSales() {
         const receipt = await web3.eth.getTransactionReceipt(
           event.transactionHash
         );
-        const nftReceiver = _getNFTReceiver(receipt.logs);
         const tokenCount = getTokenCount(receipt);
         web3.eth
           .getTransaction(event.transactionHash)
           .then(async (response) => {
             let tokenSymbol: string;
             let price: number;
+            let txValue: number;
+            let logInfo: any;
             if (
               response.to === OPENSEA_ADDRESS ||
               response.to === SEAPORT_ADDRESS ||
@@ -170,26 +160,27 @@ export async function subscribeToSales() {
               response.to === X2Y2_ADDRESS ||
               response.to === UNISWAP_ADDRESS
             ) {
-              if (+response.value != 0) {
-                tokenSymbol = 'ETH';
-                price = +web3.utils.fromWei(response.value);
-                const usdValue = await getUsdValue(price, tokenSymbol);
-                tokenCount > 1
-                  ? postSweep(
-                      tokenCount,
-                      price,
-                      `https://etherscan.io/tx/${event.transactionHash}`,
-                      `$${usdValue.toFixed(2)}`
-                    )
-                  : tweetSale(
-                      event,
-                      price,
-                      tokenSymbol,
-                      `$${usdValue.toFixed(2)}`
-                    );
-              } else {
-                nonEthSale(event, receipt, nftReceiver);
-              }
+              tokenSymbol = 'ETH';
+              txValue = getTxValue(response.value);
+              logInfo = await getLogInfo(event, receipt);
+              price = txValue + logInfo.price;
+              const usdValue = await getUsdValue(
+                price,
+                logInfo.tokenSymbol || tokenSymbol
+              );
+              tokenCount > 1
+                ? postSweep(
+                    tokenCount,
+                    price,
+                    `https://etherscan.io/tx/${event.transactionHash}`,
+                    `$${usdValue.toFixed(2)}`
+                  )
+                : tweetSale(
+                    event,
+                    price,
+                    logInfo.tokenSymbol || tokenSymbol,
+                    `$${usdValue.toFixed(2)}`
+                  );
             } else {
               console.log('Non OpenSea or LooksRare Transfer');
             }
