@@ -53,7 +53,7 @@ async function getTokenInfo(address: string) {
 
 function tweetSale(
   event: any,
-  price: number,
+  price: string,
   tokenSymbol: string,
   usdValue: string
 ) {
@@ -118,8 +118,9 @@ function getTokenCount(receipt: any): number {
         .decodeParameter('address', log.topics[2])
         .toLowerCase();
       return log.topics[0] === TRANSFER_EVENT_HASH &&
-        log.topics[3] !== null &&
-        from === receipt.from.toLowerCase()
+        log.address === CONTRACT_ADDRESS &&
+        from === receipt.from.toLowerCase() &&
+        log.data === '0x'
         ? (count += 1)
         : count;
     } catch {
@@ -171,13 +172,13 @@ export async function subscribeToSales() {
               tokenCount > 1
                 ? postSweep(
                     tokenCount,
-                    price,
+                    price.toFixed(4),
                     `https://etherscan.io/tx/${event.transactionHash}`,
                     `$${usdValue.toFixed(2)}`
                   )
                 : tweetSale(
                     event,
-                    price,
+                    price.toFixed(4),
                     logInfo.tokenSymbol || tokenSymbol,
                     `$${usdValue.toFixed(2)}`
                   );

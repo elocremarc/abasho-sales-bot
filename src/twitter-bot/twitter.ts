@@ -38,7 +38,7 @@ export function postTweet(penguin: Penguin): Promise<any> {
 
 export function postSweep(
   count: number,
-  ethValue: number,
+  ethValue: string,
   sweepUrl: string,
   usdValue: string
 ): Promise<any> {

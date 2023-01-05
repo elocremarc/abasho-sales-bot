@@ -1,5 +1,5 @@
 export interface Payment {
-  price: number;
+  price: string;
   token: string;
   usdPrice: string;
 }
