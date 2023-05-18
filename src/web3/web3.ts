@@ -18,7 +18,7 @@ const X2Y2_ADDRESS = process.env.X2Y2_ADDRESS || '';
 const UNISWAP_ADDRESS = process.env.UNISWAP_ADDRESS || '';
 const WSS_PROVIDER = process.env.WSS_PROVIDER || '';
 const PENGUIN_BASE_URL =
-  'https://opensea.io/assets/0xbd3531da5cf5857e7cfaa92426877b022e612cf8/';
+  'https://opensea.io/assets/ethereum/0xbd3531da5cf5857e7cfaa92426877b022e612cf8/';
 const TRANSFER_EVENT_HASH =
   '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
 
