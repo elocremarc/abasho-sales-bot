@@ -153,6 +153,9 @@ export async function subscribeToSales() {
             let price: number;
             let txValue: number;
             let logInfo: any;
+            console.log(response.to);
+            console.log(response.to === BLUR_BLEND_ADDRESS);
+
             if (
               response.to === OPENSEA_ADDRESS ||
               response.to === SEAPORT_ADDRESS ||
