@@ -154,6 +154,8 @@ export async function subscribeToSales() {
             let txValue: number;
             let logInfo: any;
             console.log(response.to);
+            console.log(BLUR_BLEND_ADDRESS);
+
             console.log(response.to === BLUR_BLEND_ADDRESS);
 
             if (
