@@ -14,6 +14,7 @@ const SEAPORT_ADDRESS = process.env.SEAPORT_ADDRESS || '';
 const LOOKS_RARE_ADDRESS = process.env.LOOKS_RARE_ADDRESS || '';
 const BLUR_ADDRESS = process.env.BLUR_ADDRESS || '';
 const BLUR_SWEEP_ADDRESS = process.env.BLUR_SWEEP_ADDRESS || '';
+const BLUR_BLEND_ADDRESS = process.env.BLUR_BLEND_ADDRESS || '';
 const X2Y2_ADDRESS = process.env.X2Y2_ADDRESS || '';
 const UNISWAP_ADDRESS = process.env.UNISWAP_ADDRESS || '';
 const WSS_PROVIDER = process.env.WSS_PROVIDER || '';
@@ -152,12 +153,12 @@ export async function subscribeToSales() {
             let price: number;
             let txValue: number;
             let logInfo: any;
-            console.log(response.to);
             if (
               response.to === OPENSEA_ADDRESS ||
               response.to === SEAPORT_ADDRESS ||
               response.to === LOOKS_RARE_ADDRESS ||
               response.to === BLUR_ADDRESS ||
+              response.to === BLUR_BLEND_ADDRESS ||
               response.to === BLUR_SWEEP_ADDRESS ||
               response.to === X2Y2_ADDRESS ||
               response.to === UNISWAP_ADDRESS
