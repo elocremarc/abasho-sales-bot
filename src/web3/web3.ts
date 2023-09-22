@@ -141,6 +141,8 @@ export async function subscribeToSales() {
     })
     .on('data', async (event: any) => {
       console.log('Transfer event');
+      console.log(event.transactionHash);
+
       if (event.transactionHash != lastTx) {
         lastTx = event.transactionHash;
         const receipt = await web3.eth.getTransactionReceipt(
