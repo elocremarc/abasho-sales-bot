@@ -93,6 +93,7 @@ const getLogInfo = async (event: any, receipt: any) => {
   let price: number = 0;
 
   for (let log of receipt.logs) {
+    if (log.topics.length <= 1) continue;
     const to = web3.eth.abi
       .decodeParameter('address', log.topics[1])
       .toLowerCase();
@@ -153,10 +154,6 @@ export async function subscribeToSales() {
             let price: number;
             let txValue: number;
             let logInfo: any;
-            console.log(response.to);
-            console.log(BLUR_BLEND_ADDRESS);
-
-            console.log(response.to === BLUR_BLEND_ADDRESS);
 
             if (
               response.to === OPENSEA_ADDRESS ||
@@ -172,10 +169,11 @@ export async function subscribeToSales() {
               txValue = getTxValue(response.value);
               logInfo = await getLogInfo(event, receipt);
               price = txValue + logInfo.price;
-              const usdValue = await getUsdValue(
-                price,
-                logInfo.tokenSymbol || tokenSymbol
-              );
+              const symbol =
+                logInfo.tokenSymbol === 'Blur Pool'
+                  ? tokenSymbol
+                  : logInfo.tokenSymbol || tokenSymbol;
+              const usdValue = await getUsdValue(price, symbol);
               tokenCount > 1
                 ? postSweep(
                     tokenCount,
@@ -186,7 +184,7 @@ export async function subscribeToSales() {
                 : tweetSale(
                     event,
                     price.toFixed(4),
-                    logInfo.tokenSymbol || tokenSymbol,
+                    symbol,
                     `$${usdValue.toFixed(2)}`
                   );
             } else {
